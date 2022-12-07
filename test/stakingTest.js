@@ -37,7 +37,7 @@ describe("Staking rewards", function () {
         // mint some erc20 rewards
         await tokenContract.mint(stakingContract.address, 10000000);
 
-        // ######## STAKE PASS #######
+        // ######## STAKING #######
 
         // 1. approve the nft
         await nftContract.connect(user1).approve(stakingContract.address, 0);
