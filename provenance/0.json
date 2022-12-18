@@ -1,0 +1,31 @@
+{
+  "name": "OW #0",
+  "description": "Ollie's World",
+  "image": "ipfs://QmYSng7Cvs8wmkkvkEBjvWWksMq2eKK6RUBjHxTdfMFDEq/0.png",
+  "imageHash": "1f864f47d89df7d03e5fd9d32fd460fdd08632617543ae67f561568f10ba6623",
+  "edition": 0,
+  "date": 1671300519774,
+  "attributes": [
+    {
+      "trait_type": "Background",
+      "value": "Red"
+    },
+    {
+      "trait_type": "Standard Frame",
+      "value": "OW"
+    },
+    {
+      "trait_type": "Pup Style",
+      "value": "Ladybug Eyes"
+    },
+    {
+      "trait_type": "Headgear",
+      "value": "Aviator Sunnies"
+    },
+    {
+      "trait_type": "Photo Bombers",
+      "value": "Crystal babies"
+    }
+  ],
+  "compiler": "HashLips Art Engine - NFTChef fork"
+}
