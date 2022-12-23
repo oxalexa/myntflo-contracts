@@ -622,8 +622,8 @@
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/contracts/MyntfloStaking.sol": {
-      "lastModificationDate": 1671798139716,
-      "contentHash": "033876b28bc71670d043376787dbaebf",
+      "lastModificationDate": 1671800326084,
+      "contentHash": "1b247387bf802535dd6783e074767396",
       "sourceName": "contracts/MyntfloStaking.sol",
       "solcConfig": {
         "version": "0.8.17",

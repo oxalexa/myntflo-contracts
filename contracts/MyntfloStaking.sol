@@ -26,6 +26,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         address staker;
         uint256 tokenId;
         uint256 timeStaked;
+        uint256 timeOfLastUpdate;
         address contractAddress;
     }
     
@@ -81,7 +82,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
 
         // Create StakedToken
-        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId, block.timestamp, _tokenContract);
+        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId, block.timestamp, block.timestamp, _tokenContract);
 
         // Add the token to the stakedTokens array
         stakers[_msgSender()].stakedTokens.push(stakedToken);
@@ -159,7 +160,14 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     function claimRewards() external {
         uint256 rewards = calculateRewards(_msgSender()) + stakers[_msgSender()].unclaimedRewards;
         require(rewards > 0, "You have no rewards to claim");
-        stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
+
+        // Update the timeOfLastUpdate for every nft staked
+        for(uint256 i = 0; i < stakers[_msgSender()].stakedTokens.length; i++) {
+            if(stakers[_msgSender()].stakedTokens[i].staker != address(0)) {
+                stakers[_msgSender()].stakedTokens[i].timeOfLastUpdate = block.timestamp;
+            }
+        }
+
         stakers[_msgSender()].unclaimedRewards = 0;
         rewardsToken.safeTransfer(_msgSender(), rewards);
     }
@@ -176,25 +184,21 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
     function getStakedTokens(address _user) public view returns (StakedToken[] memory) {
         // Check if we know this user
-        if (stakers[_user].amountStaked > 0) {
-            // Return all the tokens in the stakedToken Array for this user that are not -1
-            StakedToken[] memory _stakedTokens = new StakedToken[](stakers[_user].amountStaked);
-            uint256 _index = 0;
-
-            for (uint256 j = 0; j < stakers[_user].stakedTokens.length; j++) {
-                if (stakers[_user].stakedTokens[j].staker != (address(0))) {
-                    _stakedTokens[_index] = stakers[_user].stakedTokens[j];
-                    _index++;
-                }
-            }
-
-            return _stakedTokens;
-        }
+        if(stakers[_user].amountStaked == 0) return new StakedToken[](0);
         
-        // Otherwise, return empty array
-        else {
-            return new StakedToken[](0);
+        // Return all the tokens in the stakedToken Array for this user that are not -1
+        StakedToken[] memory _stakedTokens = new StakedToken[](stakers[_user].amountStaked);
+        uint256 _index = 0;
+
+        for (uint256 j = 0; j < stakers[_user].stakedTokens.length; j++) {
+            if (stakers[_user].stakedTokens[j].staker != (address(0))) {
+                _stakedTokens[_index] = stakers[_user].stakedTokens[j];
+                _index++;
+            }
         }
+
+        return _stakedTokens;
+    
     }
 
     //////////////
@@ -202,7 +206,8 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     //////////////
 
     // receives the amount of time passed in seconds and returns the amount of rewards
-    // for a single token using a decay function
+    // for a single token using a decay function,
+    // it calculates each day's rewards and adds them up
     function decay(uint256 secondsPassed) internal view returns (uint256) {
         uint hoursPassed = secondsPassed / 3600;
         uint daysPassed = hoursPassed / 24;
@@ -218,27 +223,45 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         uint B = 10;
         uint X = 3;
 
-        return (A / ((B + daysPassed) ** X));
+        uint256 cumulativeRewards = 0;
+        for(uint i = 1; i <= daysPassed; i++) {
+            cumulativeRewards += (A / ((B + i) ** X));
+        }
+
+        return cumulativeRewards;
 
     }
 
 
     // Calculate rewards for param _staker by calculating the time passed
-    // since last update in hours and mulitplying it to ERC721 Tokens Staked
-    // and rewardsPerHour.
+    // since last update for every NFT staked
     function calculateRewards(address _staker) internal view returns (uint256 _rewards){
         
-        uint256 secondsPassed = stakers[_staker].timeOfLastUpdate > 0 ? block.timestamp - stakers[_staker].timeOfLastUpdate : 0;
+        
+        // calculate decay for every token staked
+        uint256 totalRewards = 0;
+        for(uint256 i = 0; i < stakers[_staker].stakedTokens.length; i++) {
+            if (stakers[_staker].stakedTokens[i].staker != address(0)) {
 
-        console.log("\n\n----- Calculating rewards -----");
-        console.log('user: %s', _staker);
-        console.log('time now: %s', block.timestamp);
-        console.log('timeOfLastUpdate: %s', stakers[_staker].timeOfLastUpdate);
-        console.log('amount staked: %s', stakers[_staker].amountStaked);
-        console.log('time difference: %s', secondsPassed);
-        console.log('rewards: %s', decay(secondsPassed) * stakers[_staker].amountStaked);
+                uint256 secondsPassed = block.timestamp - stakers[_staker].stakedTokens[i].timeOfLastUpdate;
 
-        return decay(secondsPassed) * stakers[_staker].amountStaked;
+                console.log("\n\n----- Calculating rewards -----");
+                console.log('user: %s', _staker);
+                console.log('nft: %s', stakers[_staker].stakedTokens[i].tokenId);
+                console.log('nft contract: %s', stakers[_staker].stakedTokens[i].contractAddress);
+                console.log('time now: %s', block.timestamp);
+                console.log('timeOfLastUpdate: %s', stakers[_staker].stakedTokens[i].timeOfLastUpdate);
+                console.log('amount of token staked: %s', stakers[_staker].amountStaked);
+                console.log('time difference: %s', secondsPassed);
+                console.log('rewards: %s', decay(secondsPassed) * stakers[_staker].amountStaked);
+
+                totalRewards += decay(secondsPassed);
+                console.log('token %s: %s', i, decay(secondsPassed));
+
+            }
+        }
+
+        return totalRewards;
 
     }
 
