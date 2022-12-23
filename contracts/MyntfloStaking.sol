@@ -214,7 +214,6 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         // uint decreasingFactor = 2;
         
         console.log('daysPassed: %s', daysPassed);
-        daysPassed = daysPassed;
         
         uint A = 9330000;
         uint B = 10;
@@ -222,9 +221,6 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
         return (A / ((B + daysPassed) ** X));
 
-        // int res = int(initialAmount - (hoursPassed * (initialAmount / hoursToZero)));
-        // if(res > 0) return uint(res);
-        // return 0;
     }
 
 

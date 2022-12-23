@@ -1,0 +1,11 @@
+function decay(uint256 secondsPassed) internal view returns (uint256) {
+        uint hoursPassed = secondsPassed / 3600;
+        uint daysPassed = hoursPassed / 24;
+        
+        uint A = 9330000;
+        uint B = 10;
+        uint X = 3;
+
+        return (A / ((B + daysPassed) ** X));
+
+}
