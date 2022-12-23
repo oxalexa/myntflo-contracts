@@ -14,7 +14,6 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
     // Interfaces for ERC20 and ERC721
     IERC20 public rewardsToken;
-    IERC721 public nftCollection;
 
     address public owner;
 
@@ -26,6 +25,8 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     struct StakedToken {
         address staker;
         uint256 tokenId;
+        uint256 timeStaked;
+        address contractAddress;
     }
     
     // Staker info
@@ -49,14 +50,13 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
     // Mapping of Token Id to staker. Made for the SC to remember
     // who to send back the ERC721 Token to.
-    mapping(uint256 => address) public stakerAddress;
+    mapping(address => mapping(uint256 => address)) public stakerAddress;
 
     event Staked(address caller, uint256 tokenId);
     event Unstaked(address caller, uint256 tokenId);
 
     // Constructor function to set owner, the rewards token and the NFT collection addresses
-    constructor(MinimalForwarder forwarder, IERC721 _nftCollection, IERC20 _rewardsToken) ERC2771Context(address(forwarder)) {
-        nftCollection = _nftCollection;
+    constructor(MinimalForwarder forwarder, IERC20 _rewardsToken) ERC2771Context(address(forwarder)) {
         rewardsToken = _rewardsToken;
         owner = _msgSender();
     }
@@ -65,12 +65,14 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     // Increment the amountStaked and map _msgSender() to the Token Id of the staked
     // Token to later send back on withdrawal. Finally give timeOfLastUpdate the
     // value of now.
-    function stake(uint256 _tokenId) external nonReentrant {
+    function stake(uint256 _tokenId, address _tokenContract) external nonReentrant {
         // If wallet has tokens staked, calculate the rewards before adding the new token
         if (stakers[_msgSender()].amountStaked > 0) {
             uint256 rewards = calculateRewards(_msgSender());
             stakers[_msgSender()].unclaimedRewards += rewards;
         }
+
+        IERC721 nftCollection = IERC721(_tokenContract);
 
         // Wallet must own the token they are trying to stake
         require(nftCollection.ownerOf(_tokenId) == _msgSender(), "You don't own this token!");
@@ -79,7 +81,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
 
         // Create StakedToken
-        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId);
+        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId, block.timestamp, _tokenContract);
 
         // Add the token to the stakedTokens array
         stakers[_msgSender()].stakedTokens.push(stakedToken);
@@ -88,28 +90,25 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         stakers[_msgSender()].amountStaked++;
 
         // Update the mapping of the tokenId to the staker's address
-        stakerAddress[_tokenId] = _msgSender();
+        stakerAddress[_tokenContract][_tokenId] = _msgSender();
 
         // Update the timeOfLastUpdate for the staker   
         stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
 
         emit Staked(_msgSender(), _tokenId);
 
-        console.log('time on staking: %s', block.timestamp);
+        console.log('staking on: %s', block.timestamp);
     }
     
     // Check if user has any ERC721 Tokens Staked and if they tried to withdraw,
     // calculate the rewards and store them in the unclaimedRewards
     // decrement the amountStaked of the user and transfer the ERC721 token back to them
-    function withdraw(uint256 _tokenId) external nonReentrant {
+    function withdraw(uint256 _tokenId, address _tokenContract) external nonReentrant {
         // Make sure the user has at least one token staked before withdrawing
-        require(
-            stakers[_msgSender()].amountStaked > 0,
-            "You have no tokens staked"
-        );
+        require(stakers[_msgSender()].amountStaked > 0, "You have no tokens staked");
         
         // Wallet must own the token they are trying to withdraw
-        require(stakerAddress[_tokenId] == _msgSender(), "You don't own this token!");
+        require(stakerAddress[_tokenContract][_tokenId] == _msgSender(), "You don't own this token!");
 
         // Update the rewards for this user, as the amount of rewards decreases with less tokens.
         uint256 rewards = calculateRewards(_msgSender());
@@ -120,6 +119,8 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         for (uint256 i = 0; i < stakers[_msgSender()].stakedTokens.length; i++) {
             if (
                 stakers[_msgSender()].stakedTokens[i].tokenId == _tokenId 
+                &&
+                stakers[_msgSender()].stakedTokens[i].contractAddress == _tokenContract
                 && 
                 stakers[_msgSender()].stakedTokens[i].staker != address(0)
             ) {
@@ -135,7 +136,9 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         stakers[_msgSender()].amountStaked--;
 
         // Update the mapping of the tokenId to the be address(0) to indicate that the token is no longer staked
-        stakerAddress[_tokenId] = address(0);
+        stakerAddress[_tokenContract][_tokenId] = address(0);
+
+        IERC721 nftCollection = IERC721(_tokenContract);
 
         // Transfer the token back to the withdrawer
         nftCollection.transferFrom(address(this), _msgSender(), _tokenId);
@@ -144,10 +147,6 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
 
         emit Staked(_msgSender(), _tokenId);
-    }
-
-    function setNftCollection(IERC721 _nftCollection) external onlyOwner {
-        nftCollection = _nftCollection;
     }
 
     function setRewardsToken(IERC20 _rewardsToken) external onlyOwner {
