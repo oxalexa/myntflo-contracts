@@ -5,19 +5,22 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 import "hardhat/console.sol";
 
-contract MyntfloStaking is ReentrancyGuard {
+contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     using SafeERC20 for IERC20;
 
     // Interfaces for ERC20 and ERC721
-    IERC20 public immutable rewardsToken;
-    IERC721 public immutable nftCollection;
+    IERC20 public rewardsToken;
+    IERC721 public nftCollection;
 
-    // Constructor function to set the rewards token and the NFT collection addresses
-    constructor(IERC721 _nftCollection, IERC20 _rewardsToken) {
-        nftCollection = _nftCollection;
-        rewardsToken = _rewardsToken;
+    address public owner;
+
+    modifier onlyOwner() {
+        require(_msgSender() == owner, "Ownable: caller is not the owner");
+        _;
     }
 
     struct StakedToken {
@@ -40,16 +43,7 @@ contract MyntfloStaking is ReentrancyGuard {
         // calculated each time the user writes to the Smart Contract
         uint256 unclaimedRewards;
     }
-
-    function decay(uint256 _seconds) internal pure returns (uint256) {
-        uint _hours = _seconds / 3600;
-        uint initial = 1000;
-        uint hoursToZero = 100;
-        int res = int(initial - (_hours * (initial / hoursToZero)));
-        if(res > 0) return uint(res);
-        return 0;
-    }
-
+ 
     // Mapping of User Address to Staker info
     mapping(address => Staker) public stakers;
 
@@ -57,41 +51,49 @@ contract MyntfloStaking is ReentrancyGuard {
     // who to send back the ERC721 Token to.
     mapping(uint256 => address) public stakerAddress;
 
+    event Staked(address caller, uint256 tokenId);
+    event Unstaked(address caller, uint256 tokenId);
+
+    // Constructor function to set owner, the rewards token and the NFT collection addresses
+    constructor(MinimalForwarder forwarder, IERC721 _nftCollection, IERC20 _rewardsToken) ERC2771Context(address(forwarder)) {
+        nftCollection = _nftCollection;
+        rewardsToken = _rewardsToken;
+        owner = _msgSender();
+    }
+   
     // If address already has ERC721 Token/s staked, calculate the rewards.
-    // Increment the amountStaked and map msg.sender to the Token Id of the staked
+    // Increment the amountStaked and map _msgSender() to the Token Id of the staked
     // Token to later send back on withdrawal. Finally give timeOfLastUpdate the
     // value of now.
     function stake(uint256 _tokenId) external nonReentrant {
         // If wallet has tokens staked, calculate the rewards before adding the new token
-        if (stakers[msg.sender].amountStaked > 0) {
-            uint256 rewards = calculateRewards(msg.sender);
-            stakers[msg.sender].unclaimedRewards += rewards;
+        if (stakers[_msgSender()].amountStaked > 0) {
+            uint256 rewards = calculateRewards(_msgSender());
+            stakers[_msgSender()].unclaimedRewards += rewards;
         }
 
         // Wallet must own the token they are trying to stake
-        require(
-            nftCollection.ownerOf(_tokenId) == msg.sender,
-            "You don't own this token!"
-        );
+        require(nftCollection.ownerOf(_tokenId) == _msgSender(), "You don't own this token!");
 
         // Transfer the token from the wallet to the Smart contract
-        nftCollection.transferFrom(msg.sender, address(this), _tokenId);
+        nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
 
         // Create StakedToken
-        StakedToken memory stakedToken = StakedToken(msg.sender, _tokenId);
+        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId);
 
         // Add the token to the stakedTokens array
-        stakers[msg.sender].stakedTokens.push(stakedToken);
+        stakers[_msgSender()].stakedTokens.push(stakedToken);
 
         // Increment the amount staked for this wallet
-        stakers[msg.sender].amountStaked++;
+        stakers[_msgSender()].amountStaked++;
 
         // Update the mapping of the tokenId to the staker's address
-        stakerAddress[_tokenId] = msg.sender;
+        stakerAddress[_tokenId] = _msgSender();
 
         // Update the timeOfLastUpdate for the staker   
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
+        stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
 
+        emit Staked(_msgSender(), _tokenId);
 
         console.log('time on staking: %s', block.timestamp);
     }
@@ -102,24 +104,24 @@ contract MyntfloStaking is ReentrancyGuard {
     function withdraw(uint256 _tokenId) external nonReentrant {
         // Make sure the user has at least one token staked before withdrawing
         require(
-            stakers[msg.sender].amountStaked > 0,
+            stakers[_msgSender()].amountStaked > 0,
             "You have no tokens staked"
         );
         
         // Wallet must own the token they are trying to withdraw
-        require(stakerAddress[_tokenId] == msg.sender, "You don't own this token!");
+        require(stakerAddress[_tokenId] == _msgSender(), "You don't own this token!");
 
         // Update the rewards for this user, as the amount of rewards decreases with less tokens.
-        uint256 rewards = calculateRewards(msg.sender);
-        stakers[msg.sender].unclaimedRewards += rewards;
+        uint256 rewards = calculateRewards(_msgSender());
+        stakers[_msgSender()].unclaimedRewards += rewards;
 
         // Find the index of this token id in the stakedTokens array
         uint256 index = 0;
-        for (uint256 i = 0; i < stakers[msg.sender].stakedTokens.length; i++) {
+        for (uint256 i = 0; i < stakers[_msgSender()].stakedTokens.length; i++) {
             if (
-                stakers[msg.sender].stakedTokens[i].tokenId == _tokenId 
+                stakers[_msgSender()].stakedTokens[i].tokenId == _tokenId 
                 && 
-                stakers[msg.sender].stakedTokens[i].staker != address(0)
+                stakers[_msgSender()].stakedTokens[i].staker != address(0)
             ) {
                 index = i;
                 break;
@@ -127,31 +129,40 @@ contract MyntfloStaking is ReentrancyGuard {
         }
 
         // Set this token's .staker to be address 0 to mark it as no longer staked
-        stakers[msg.sender].stakedTokens[index].staker = address(0);
+        stakers[_msgSender()].stakedTokens[index].staker = address(0);
 
         // Decrement the amount staked for this wallet
-        stakers[msg.sender].amountStaked--;
+        stakers[_msgSender()].amountStaked--;
 
         // Update the mapping of the tokenId to the be address(0) to indicate that the token is no longer staked
         stakerAddress[_tokenId] = address(0);
 
         // Transfer the token back to the withdrawer
-        nftCollection.transferFrom(address(this), msg.sender, _tokenId);
+        nftCollection.transferFrom(address(this), _msgSender(), _tokenId);
 
         // Update the timeOfLastUpdate for the withdrawer   
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
+        stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
+
+        emit Staked(_msgSender(), _tokenId);
     }
 
-    // Calculate rewards for the msg.sender, check if there are any rewards
+    function setNftCollection(IERC721 _nftCollection) external onlyOwner {
+        nftCollection = _nftCollection;
+    }
+
+    function setRewardsToken(IERC20 _rewardsToken) external onlyOwner {
+        rewardsToken = _rewardsToken;
+    }
+
+    // Calculate rewards for the _msgSender(), check if there are any rewards
     // claim, set unclaimedRewards to 0 and transfer the ERC20 Reward token
     // to the user.
     function claimRewards() external {
-        uint256 rewards = calculateRewards(msg.sender) +
-            stakers[msg.sender].unclaimedRewards;
+        uint256 rewards = calculateRewards(_msgSender()) + stakers[_msgSender()].unclaimedRewards;
         require(rewards > 0, "You have no rewards to claim");
-        stakers[msg.sender].timeOfLastUpdate = block.timestamp;
-        stakers[msg.sender].unclaimedRewards = 0;
-        rewardsToken.safeTransfer(msg.sender, rewards);
+        stakers[_msgSender()].timeOfLastUpdate = block.timestamp;
+        stakers[_msgSender()].unclaimedRewards = 0;
+        rewardsToken.safeTransfer(_msgSender(), rewards);
     }
 
 
@@ -160,8 +171,7 @@ contract MyntfloStaking is ReentrancyGuard {
     //////////
 
     function availableRewards(address _staker) public view returns (uint256) {
-        uint256 rewards = calculateRewards(_staker) +
-            stakers[_staker].unclaimedRewards;
+        uint256 rewards = calculateRewards(_staker) + stakers[_staker].unclaimedRewards;
         return rewards;
     }
 
@@ -188,22 +198,55 @@ contract MyntfloStaking is ReentrancyGuard {
         }
     }
 
-    /////////////
-    // Internal//
-    /////////////
+    //////////////
+    // Internal //
+    //////////////
+
+    // receives the amount of time passed in seconds and returns the amount of rewards
+    // for a single token using a decay function
+    function decay(uint256 secondsPassed) internal view returns (uint256) {
+        uint hoursPassed = secondsPassed / 3600;
+        uint daysPassed = hoursPassed / 24;
+        
+        // uint initialAmount = 933;
+        // uint hoursToZero = 1440;
+        // uint daysToZero = 60;
+        // uint decreasingFactor = 2;
+        
+        console.log('daysPassed: %s', daysPassed);
+        daysPassed = daysPassed;
+        
+        uint A = 9330000;
+        uint B = 10;
+        uint X = 3;
+
+        return (A / ((B + daysPassed) ** X));
+
+        // int res = int(initialAmount - (hoursPassed * (initialAmount / hoursToZero)));
+        // if(res > 0) return uint(res);
+        // return 0;
+    }
+
 
     // Calculate rewards for param _staker by calculating the time passed
     // since last update in hours and mulitplying it to ERC721 Tokens Staked
     // and rewardsPerHour.
     function calculateRewards(address _staker) internal view returns (uint256 _rewards){
         
-        console.log('Calculating rewards');
+        uint256 secondsPassed = stakers[_staker].timeOfLastUpdate > 0 ? block.timestamp - stakers[_staker].timeOfLastUpdate : 0;
+
+        console.log("\n\n----- Calculating rewards -----");
         console.log('user: %s', _staker);
         console.log('time now: %s', block.timestamp);
         console.log('timeOfLastUpdate: %s', stakers[_staker].timeOfLastUpdate);
         console.log('amount staked: %s', stakers[_staker].amountStaked);
-        console.log('time difference: %s', (block.timestamp - stakers[_staker].timeOfLastUpdate));
-        
-        return decay(block.timestamp - stakers[_staker].timeOfLastUpdate) * stakers[_staker].amountStaked;
+        console.log('time difference: %s', secondsPassed);
+        console.log('rewards: %s', decay(secondsPassed) * stakers[_staker].amountStaked);
+
+        return decay(secondsPassed) * stakers[_staker].amountStaked;
+
     }
+
+    
+
 }

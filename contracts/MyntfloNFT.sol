@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 import "./ERC721A.sol";
 
-contract MyntfloNFT is ERC721A, Ownable, ReentrancyGuard, DefaultOperatorFilterer {
+
+contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC2771Context {
 
     using Strings for uint256;
 
@@ -23,17 +26,25 @@ contract MyntfloNFT is ERC721A, Ownable, ReentrancyGuard, DefaultOperatorFiltere
 
     string private baseURI = "";
     string public provenance = "";
-    string public uriPass = "";
     
     bool public paused = false;
     
     uint256 public saleStatus = 0; // 0 - whitelist, 1 - public
     
     bytes32 public merkleRootWL = "";
-    
+
+    address public owner;
+
     event Minted(address caller);
 
-    constructor() ERC721A("Myntflo", "MYNT") {}
+    modifier onlyOwner() {
+        require(_msgSender() == owner, "Ownable: caller is not the owner");
+        _;
+    }
+
+    constructor(MinimalForwarder forwarder) ERC2771Context(address(forwarder)) ERC721A("Myntflo", "MYNT") {
+        owner = _msgSender();
+    }
     
     function mintPublic(uint256 count, address to) external payable nonReentrant{
         require(!paused, "Minting is paused");
@@ -79,11 +90,14 @@ contract MyntfloNFT is ERC721A, Ownable, ReentrancyGuard, DefaultOperatorFiltere
     }
     
     function getTokensByOwner(address _owner) external view returns(uint256[] memory) {
-        uint256 tokenCount = balanceOf(_owner);
-        uint256[] memory tokensId = new uint256[](tokenCount);
-        for (uint256 i = 0; i < tokenCount; i++) {
+        uint256 balance = balanceOf(_owner);
+        uint256 supply = totalSupply();
+        uint256[] memory tokensId = new uint256[](balance);
+        uint256 j = 0;
+        for (uint256 i = 0; i < supply; i++) {
             if(ownerOf(i) == _owner){
-                tokensId[i] = i;
+                tokensId[j] = i;
+                j++;
             }
         }
         return tokensId;
@@ -109,10 +123,7 @@ contract MyntfloNFT is ERC721A, Ownable, ReentrancyGuard, DefaultOperatorFiltere
         baseURI = _URI;
     }
 
-    function setUriPass(string memory _URI) public onlyOwner {
-        uriPass = _URI;
-    }
-
+    
     function setPricePublic(uint256 _newPrice) public onlyOwner {
         pricePublic = _newPrice;
     }
@@ -165,6 +176,16 @@ contract MyntfloNFT is ERC721A, Ownable, ReentrancyGuard, DefaultOperatorFiltere
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override onlyAllowedOperator(from){
         super.safeTransferFrom(from, to, tokenId, data);
+    }
+
+    function _msgSender() internal view override(Context, ERC2771Context)
+        returns (address sender) {
+        sender = ERC2771Context._msgSender();
+    }
+
+    function _msgData() internal view override(Context, ERC2771Context)
+        returns (bytes calldata) {
+        return ERC2771Context._msgData();
     }
 
     receive() external payable {}
