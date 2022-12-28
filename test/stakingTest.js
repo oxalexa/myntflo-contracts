@@ -58,6 +58,8 @@ describe("Staking rewards", function () {
         balance = await nftContract.balanceOf(user1.address);
         expect(balance.toNumber()).to.equal(0);
         
+
+        // add test for elegibleCollections
         
         // Test reward calculation for X days
         var days = 80;

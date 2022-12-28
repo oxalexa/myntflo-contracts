@@ -41,6 +41,9 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
     // Mapping of User Address to Staker info
     mapping(address => Staker) public stakers;
+    
+    // If a collection is elegible for staking
+    mapping(address => bool) public elegibleCollections;
 
     // Events for frontend
     event Staked(address caller, uint256 tokenId);
@@ -88,7 +91,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     function withdraw(uint256 _tokenId, address _tokenContract) external nonReentrant {
 
         // Make sure the user has at least one token staked before withdrawing
-        require(stakers[_msgSender()].amountStaked > 0, "You have no tokens staked");
+        require(stakers[_msgSender()].amountStaked > 0, "You have no NFTs staked");
         
         // Find the index of this token id in the users stakedTokens array
         uint256 index = 0;
@@ -106,7 +109,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         }
 
         // Make sure the token is staked
-        require(nftFound, "This token is not staked");
+        require(nftFound, "This NFT is not staked");
 
         // Calculate rewards for this token and transfer it to the user
         uint256 secondsPassed = block.timestamp - stakers[_msgSender()].stakedTokens[index].timeOfLastUpdate;
@@ -123,12 +126,22 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         IERC721(_tokenContract).transferFrom(address(this), _msgSender(), _tokenId);
 
         // Emit event
-        emit Staked(_msgSender(), _tokenId);
+        emit Unstaked(_msgSender(), _tokenId);
     }
 
     // Update the rewards token address
     function setRewardsToken(IERC20 _rewardsToken) external onlyOwner {
         rewardsToken = _rewardsToken;
+    }
+
+    function setElegibleCollection(address _collection, bool _elegible) external onlyOwner {
+        elegibleCollections[_collection] = _elegible;
+    }
+
+    function setElegibleCollections(address[] memory _collections, bool[] memory _elegible) external onlyOwner {
+        for(uint256 i = 0; i < _collections.length; i++) {
+            elegibleCollections[_collections[i]] = _elegible[i];
+        }
     }
 
     // Calculate current pending rewards, transfer them to user
