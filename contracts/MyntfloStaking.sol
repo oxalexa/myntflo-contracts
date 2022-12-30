@@ -50,9 +50,6 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     event Unstaked(address caller, uint256 tokenId);
     event RewardsClaimed(address caller);
 
-
-
-
     // Constructor, sets the owner and rewards token address
     constructor(MinimalForwarder forwarder, IERC20 _rewardsToken) ERC2771Context(address(forwarder)) {
         rewardsToken = _rewardsToken;
