@@ -27,6 +27,9 @@ describe("Staking rewards", function () {
         const stakingFactory = await ethers.getContractFactory("MyntfloStaking");
         const stakingContract = await stakingFactory.deploy(forwardingContractAddress, tokenAddress);
         
+        // enable the collection
+        await stakingContract.setElegibleCollection(nftAddress, true);
+
         // mints an NFT
         await nftContract.setSaleStatus(1);
         await nftContract.mintPublic(1, user1.address, {value: 0});
@@ -68,8 +71,8 @@ describe("Staking rewards", function () {
             var availableRewards = await stakingContract.connect(user1).availableRewards(user1.address);
         }
 
-        // 8. withdraw
-        await stakingContract.connect(user1).withdraw(0, nftAddress);
+        // 8. unstake
+        await stakingContract.connect(user1).unstake(0, nftAddress);
 
         // 9. check if the user got the nft back
         balance = await nftContract.balanceOf(user1.address);
