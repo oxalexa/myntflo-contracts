@@ -87,8 +87,8 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     }
     
 
-    // Withdraw NFT
-    function withdraw(uint256 _tokenId, address _tokenContract) external nonReentrant {
+    // Unstake the NFT
+    function unstake(uint256 _tokenId, address _tokenContract) external nonReentrant {
 
         // Make sure the user has at least one token staked before withdrawing
         require(stakers[_msgSender()].amountStaked > 0, "You have no NFTs staked");
