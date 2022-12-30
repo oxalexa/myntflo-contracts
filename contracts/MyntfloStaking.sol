@@ -65,6 +65,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
         // Wallet must own the token they are trying to stake
         require(nftCollection.ownerOf(_tokenId) == _msgSender(), "You don't own this token!");
+        require(elegibleCollections[_tokenContract], "This collection is not elegible for staking");
 
         // Transfer the token from the wallet to this contract, we assume the user already granted approval
         nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
