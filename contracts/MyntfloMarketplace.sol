@@ -46,14 +46,8 @@ contract MyntfloMarketplace is ERC2771Context, ERC1155Holder, ERC721Holder{
 
     Listing[] public listings;
 
-    // Events that will be emitted when a purchase is made
-    event ERC1155Purchase(
-        address purchaser,
-        uint256 tokenId,
-        uint256 price
-    );
-
-    event ERC721Purchase(
+   
+    event TokenPurchased(
         address purchaser,
         uint256 tokenId,
         uint256 price
@@ -71,6 +65,10 @@ contract MyntfloMarketplace is ERC2771Context, ERC1155Holder, ERC721Holder{
         owner = _msgSender();
     }
 
+    function setPaymentToken (IERC20 _paymentToken) public onlyOwner {
+        paymentToken = _paymentToken;
+    }
+
     function getListings() public view returns (Listing[] memory) {
         return listings;
     }
@@ -83,7 +81,6 @@ contract MyntfloMarketplace is ERC2771Context, ERC1155Holder, ERC721Holder{
         }
         return (false, 0);
     }
-
 
     // This function allows the owner of the marketplace to add a new ERC-1155 token
     // to the marketplace and set its price in payment tokens
@@ -146,30 +143,11 @@ contract MyntfloMarketplace is ERC2771Context, ERC1155Holder, ERC721Holder{
         } else {
             erc721Contract.safeTransferFrom(address(this), _msgSender(), tokenId);
         }
+
+        emit TokenPurchased(_msgSender(), tokenId, listings[index].price);
         
     }
     
-
-    // This function allows a user to purchase an ERC-721 token from the marketplace
-    function buyERC721(uint256 tokenId) public payable {
-        require(erc721Prices[tokenId] > 0, "Token is not for sale");
-        require(erc721Inventory[tokenId] > 0, "Token is not for sale");
-
-        // Calculate the cost of the purchase
-        uint256 cost = erc721Prices[tokenId];
-        require(cost <= msg.value, "Insufficient payment");
-
-        // Transfer the payment from the buyer to the contract
-        require(paymentToken.transferFrom(_msgSender(), address(this), cost), "Transfer failed");
-
-        // Transfer the ERC-721 token from the contract to the buyer
-        erc721Contract.safeTransferFrom(address(this), _msgSender(), tokenId);
-
-        // Update the inventory and emit the purchase event
-        erc721Inventory[tokenId] = 0;
-        emit ERC721Purchase(_msgSender(), tokenId, cost);
-    }
-
 
 }
 

@@ -53,6 +53,7 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         require(supply + count <= maxSupply, "Sorry, not enough left!");
         require(count <= maxPerTxPublic, "Sorry, too many per transaction");
         require(msg.value >= pricePublic * count, "Sorry, not enough amount sent!"); 
+        require(balanceOf(to) + count <= 2, "Sorry, max 5 nfts per wallet");
         
         _safeMint(to, count);
 
@@ -103,7 +104,6 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         return tokensId;
     }
 
-
     // ADMIN FUNCTIONS
 
     function flipPaused() public onlyOwner {
@@ -122,7 +122,6 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
     function setBaseURI(string memory _URI) public onlyOwner {
         baseURI = _URI;
     }
-
     
     function setPricePublic(uint256 _newPrice) public onlyOwner {
         pricePublic = _newPrice;

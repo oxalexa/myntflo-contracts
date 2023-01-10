@@ -92,7 +92,6 @@ describe("Marketplace", function () {
         console.log('------- listings after 721 sale -------');
         console.log(listings);
 
-
         // test buying erc1155
         await marketplaceContract.connect(customer).buyToken(0, erc1155Address);
 

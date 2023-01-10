@@ -207,9 +207,9 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         
         console.log('daysPassed: %s', daysPassed);
         
-        uint A = 1285323899158280000;
-        uint B = 77;
-        uint X = 9;
+        uint A = 24615571013467300;
+        uint B = 70;
+        uint X = 8;
 
         uint256 cumulativeRewards = 0;
         for(uint i = 1; i <= daysPassed; i++) {

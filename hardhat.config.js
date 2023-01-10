@@ -33,10 +33,10 @@ module.exports = {
             url: "https://rpc.sepolia.dev", 
             accounts: ["15bfcbc7103432739b87a5156e96c13929f40d7717aa2f8996059717db95170a"] // add the account that will deploy the contract (private key)
         },
-        mainnet: {
-            url: "https://mainnet.infura.io/v3/5e7e03b8140342c293e8f3b5022b975d", // or any other JSON-RPC provider
-            accounts: ["8cee0cc47a1ccc9be596b2ffe117a33f051780e7c49cd0f11f0901c9f8441914"]
-        },
+        // mainnet: {
+        //     url: "https://mainnet.infura.io/v3/5e7e03b8140342c293e8f3b5022b975d", // or any other JSON-RPC provider
+        //     accounts: ["8cee0cc47a1ccc9be596b2ffe117a33f051780e7c49cd0f11f0901c9f8441914"]
+        // },
         mumbai: {
             url: "https://polygon-mumbai.g.alchemy.com/v2/tTrT7aj6t3oyFt3P1sWGPN__iRVh56Hh",
             accounts: ["15bfcbc7103432739b87a5156e96c13929f40d7717aa2f8996059717db95170a"] // add the account that will deploy the contract (private key)
