@@ -213,7 +213,7 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
         uint256 cumulativeRewards = 0;
         for(uint i = 1; i <= daysPassed; i++) {
-            cumulativeRewards += (A / ((B + i) ** X));
+            cumulativeRewards += (A / ((B + i) ** X)) * 10 ** 18;
         }
 
         return cumulativeRewards;
