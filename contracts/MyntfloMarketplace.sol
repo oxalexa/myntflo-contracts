@@ -122,6 +122,10 @@ contract MyntfloMarketplace is ERC2771Context, ERC1155Holder, ERC721Holder{
         erc721Contract.safeTransferFrom(_msgSender(), address(this), tokenId);
     }
 
+    function transferOwnership(address newOwner) external onlyOwner {
+        owner = newOwner;
+    }
+
     function removeERC721(uint256 tokenId, address contractAddress) public onlyOwner {
         (bool found, uint256 index) = findListingByTokenId(tokenId, contractAddress);
         require(found, "Token not found");

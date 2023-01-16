@@ -1,9 +1,9 @@
 async function main() {
     
-    var forwarderAddress = '0xFa8eBAd7A82B35234DE8305f2dB4458E9f0657FB';
-    var ERC20Address = '0x22c925A692678219CaF08f73Db85Ac78BdB54590';
-    var ERC721Address = '0x15013f19849832eda087f1bE0fE6E6d2F0F7E01b';
-    var ERC1155Address = '0xbF85C1C1817a5B250d37d888a55858Cf94a0FA25';
+    var forwarderAddress = '0xd6C93Bec60Bece9059C0Eb213F1140e4E25d9AbD';
+    var ERC20Address = '0x58A18860CFB2B8f2Fa1F4ceFb55E1D1F98a82Bd6';
+    var ERC721Address = '0xDED7BDD4c93152Fa08102ebc1971C320f512eC41';
+    var ERC1155Address = '0x669ccF3b9d22bAD79A176eD30281E667E5Fd55de';
 
     // deploy staking contract
     const CF = await ethers.getContractFactory("MyntfloMarketplace");

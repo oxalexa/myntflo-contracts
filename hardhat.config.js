@@ -41,6 +41,11 @@ module.exports = {
             url: "https://polygon-mumbai.g.alchemy.com/v2/tTrT7aj6t3oyFt3P1sWGPN__iRVh56Hh",
             accounts: ["15bfcbc7103432739b87a5156e96c13929f40d7717aa2f8996059717db95170a"] // add the account that will deploy the contract (private key)
         },
+
+        matic: {
+            url: "https://rpc.ankr.com/polygon",
+            accounts: ["15bfcbc7103432739b87a5156e96c13929f40d7717aa2f8996059717db95170a"] // add the account that will deploy the contract (private key)
+        },
     },
     etherscan: {
         // Your API key for Etherscan

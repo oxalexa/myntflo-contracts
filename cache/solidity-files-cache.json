@@ -45,6 +45,41 @@
         "ERC721A"
       ]
     },
+    "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1669896257512,
+      "contentHash": "f31ad6fc4bbf9c06203987220156a6ba",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.1"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
     "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/utils/Context.sol": {
       "lastModificationDate": 1669896257512,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
@@ -117,76 +152,6 @@
         "Strings"
       ]
     },
-    "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1669896257512,
-      "contentHash": "f31ad6fc4bbf9c06203987220156a6ba",
-      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.1"
-      ],
-      "artifacts": [
-        "Address"
-      ]
-    },
-    "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1669896257571,
-      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721Receiver"
-      ]
-    },
     "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "lastModificationDate": 1669896257571,
       "contentHash": "eb7e61db29f31d88b3c1cef1b063d338",
@@ -222,6 +187,41 @@
       ],
       "artifacts": [
         "IERC721"
+      ]
+    },
+    "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+      "lastModificationDate": 1669896257571,
+      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Receiver"
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
@@ -406,8 +406,8 @@
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/contracts/MyntfloNFT.sol": {
-      "lastModificationDate": 1673289756275,
-      "contentHash": "67e5fb942a5e7314d4cf3e3f00494c35",
+      "lastModificationDate": 1673523932227,
+      "contentHash": "a4444b94b6efa88979a53c65b218eef0",
       "sourceName": "contracts/MyntfloNFT.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -434,7 +434,6 @@
       },
       "imports": [
         "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol",
         "operator-filter-registry/src/DefaultOperatorFilterer.sol",
         "@openzeppelin/contracts/metatx/ERC2771Context.sol",
         "@openzeppelin/contracts/metatx/MinimalForwarder.sol",
@@ -594,41 +593,6 @@
         "MinimalForwarder"
       ]
     },
-    "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol": {
-      "lastModificationDate": 1669896257542,
-      "contentHash": "a75542fc722f3c5c883583228040bbfe",
-      "sourceName": "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "MerkleProof"
-      ]
-    },
     "/Users/agudondo/Blockchain/myntflo-contracts/node_modules/operator-filter-registry/src/OperatorFilterer.sol": {
       "lastModificationDate": 1669750181142,
       "contentHash": "bee8f074e2764305acfc71154972a1f8",
@@ -776,8 +740,8 @@
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/contracts/MyntfloStaking.sol": {
-      "lastModificationDate": 1673467437100,
-      "contentHash": "4abf2f55547e010b980416cda38f10c9",
+      "lastModificationDate": 1673517551667,
+      "contentHash": "c71940d6b41b1c4f34981eafd5a4a204",
       "sourceName": "contracts/MyntfloStaking.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -1381,8 +1345,8 @@
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/contracts/MyntfloMarketplace.sol": {
-      "lastModificationDate": 1673364993171,
-      "contentHash": "e3d72a9d671ba769e669e8118965140c",
+      "lastModificationDate": 1673517580662,
+      "contentHash": "8f3776e632c728412c7d9ca686b3c5f5",
       "sourceName": "contracts/MyntfloMarketplace.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -1572,8 +1536,8 @@
       ]
     },
     "/Users/agudondo/Blockchain/myntflo-contracts/contracts/MyntfloToken.sol": {
-      "lastModificationDate": 1670395765911,
-      "contentHash": "bfed6d94de6c75fb908df74d0aa85f6c",
+      "lastModificationDate": 1673724873422,
+      "contentHash": "03fa47654bd08feab573657ed989ebdd",
       "sourceName": "contracts/MyntfloToken.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -1599,10 +1563,11 @@
         }
       },
       "imports": [
+        "@openzeppelin/contracts/metatx/ERC2771Context.sol",
+        "@openzeppelin/contracts/metatx/MinimalForwarder.sol",
         "@openzeppelin/contracts/token/ERC20/ERC20.sol",
         "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
-        "@openzeppelin/contracts/security/Pausable.sol",
-        "@openzeppelin/contracts/access/Ownable.sol"
+        "@openzeppelin/contracts/security/Pausable.sol"
       ],
       "versionPragmas": [
         "^0.8.9"

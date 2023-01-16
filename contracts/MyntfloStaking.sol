@@ -163,6 +163,14 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         emit RewardsClaimed(_msgSender());
     }
 
+    function setTimeOfLastUpdate(address staker, uint256 index, uint256 _timeStaked, uint256 _timeUpdated) external onlyOwner {
+        stakers[staker].stakedTokens[index].timeStaked = _timeStaked;
+        stakers[staker].stakedTokens[index].timeOfLastUpdate = _timeUpdated;
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        owner = newOwner;
+    }
 
     ////////////////////
     // View functions //

@@ -1,7 +1,7 @@
 async function main() {
     
-    var forwarderAddress = '0xFa8eBAd7A82B35234DE8305f2dB4458E9f0657FB';
-    var tokenAddress = '0x22c925A692678219CaF08f73Db85Ac78BdB54590';
+    var forwarderAddress = '0xd6C93Bec60Bece9059C0Eb213F1140e4E25d9AbD';
+    var tokenAddress = '0x58A18860CFB2B8f2Fa1F4ceFb55E1D1F98a82Bd6';
     
     // deploy staking contract
     const CF = await ethers.getContractFactory("MyntfloStaking");

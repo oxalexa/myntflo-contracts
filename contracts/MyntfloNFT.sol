@@ -3,7 +3,6 @@ pragma solidity ^0.8.7;
 
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
@@ -14,26 +13,19 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
 
     using Strings for uint256;
 
-    mapping (address => uint256) private mintedWL;
-
-    uint256 public maxSupply = 8888;
+    uint256 public maxSupply = 5000;
     uint256 private pricePublic = 0 ether;
-    uint256 private priceWL = 0 ether;
     uint256 public maxPerTxPublic = 10;
-    uint256 public maxPerTxWL = 10;
-    uint256 public maxPerWalletWL = 10;
-    uint256 public maxPerWL = 10;
-
+    
     string private baseURI = "";
     string public provenance = "";
     
     bool public paused = false;
     
-    uint256 public saleStatus = 0; // 0 - whitelist, 1 - public
+    uint256 public saleStatus = 1; 
     
-    bytes32 public merkleRootWL = "";
-
     address public owner;
+    address public relayer;
 
     event Minted(address caller);
 
@@ -42,7 +34,7 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         _;
     }
 
-    constructor(MinimalForwarder forwarder) ERC2771Context(address(forwarder)) ERC721A("Myntflo", "MYNT") {
+    constructor(MinimalForwarder forwarder) ERC2771Context(address(forwarder)) ERC721A("Ollie's World", "OW") {
         owner = _msgSender();
     }
     
@@ -53,8 +45,9 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         require(supply + count <= maxSupply, "Sorry, not enough left!");
         require(count <= maxPerTxPublic, "Sorry, too many per transaction");
         require(msg.value >= pricePublic * count, "Sorry, not enough amount sent!"); 
-        require(balanceOf(to) + count <= 2, "Sorry, max 5 nfts per wallet");
-        
+        require(balanceOf(to) + count <= 2, "Sorry, max 2 nfts per wallet");
+        require(pricePublic > 0 || _msgSender() == relayer || msg.sender == relayer || tx.origin == relayer, "Minting disabled");
+
         _safeMint(to, count);
 
         emit Minted(to);
@@ -71,10 +64,6 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         return left;
     }
 
-    function getPriceWL() public view returns(uint256){
-        return priceWL;
-    }
-
     function getPricePublic() public view returns (uint256){
         return pricePublic;
     }
@@ -85,11 +74,6 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         return bytes(base).length > 0 ? string(abi.encodePacked(base, tokenId.toString(), ".json")) : "";
     }
 
-    // verify merkle tree leaf
-    function _verify(bytes32 leaf, bytes32[] memory proof) internal view returns (bool){
-        return MerkleProof.verify(proof, merkleRootWL, leaf);
-    }
-    
     function getTokensByOwner(address _owner) external view returns(uint256[] memory) {
         uint256 balance = balanceOf(_owner);
         uint256 supply = totalSupply();
@@ -115,10 +99,6 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         maxSupply = supply;
     }
     
-    function setMaxPerWL(uint256 _max) public onlyOwner {
-        maxPerWL = _max;
-    }
-
     function setBaseURI(string memory _URI) public onlyOwner {
         baseURI = _URI;
     }
@@ -127,24 +107,12 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
         pricePublic = _newPrice;
     }
 
-    function setPriceWL(uint256 _newPrice) public onlyOwner {
-        priceWL = _newPrice;
-    }
-
     function setMaxPerTxPublic(uint256 _newMax) public onlyOwner {
         maxPerTxPublic = _newMax;
     }
 
-    function setMaxPerTxWL(uint256 _newMax) public onlyOwner {
-        maxPerTxWL = _newMax;
-    }
-
     function setProvenanceHash(string memory _provenance) public onlyOwner {
         provenance = _provenance;
-    }
-
-    function setMerkleRootWL(bytes32 _merkleRoot) public onlyOwner {
-        merkleRootWL = _merkleRoot;
     }
 
     function setSaleStatus(uint256 _saleStatus) public onlyOwner {
@@ -154,6 +122,14 @@ contract MyntfloNFT is ERC721A, ReentrancyGuard, DefaultOperatorFilterer, ERC277
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
         require(payable(msg.sender).send(balance));
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        owner = newOwner;
+    }
+
+    function setRelayerAddress(address _relayer) external onlyOwner {
+        relayer = _relayer;
     }
 
     // royalties overrides
