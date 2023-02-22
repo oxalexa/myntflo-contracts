@@ -45,6 +45,9 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
     // If a collection is elegible for staking
     mapping(address => bool) public elegibleCollections;
 
+    mapping(address => mapping(uint256 => uint256)) private timeOfLastUpdate;
+    mapping(address => bool) private collectionStaked;
+
     // Events for frontend
     event Staked(address caller, uint256 tokenId);
     event Unstaked(address caller, uint256 tokenId);
@@ -70,9 +73,17 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
         // Transfer the token from the wallet to this contract, we assume the user already granted approval
         nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
 
+        uint256 lastUpdate = block.timestamp;
+        if(!collectionStaked[_tokenContract]){
+            collectionStaked[_tokenContract] = true;
+            timeOfLastUpdate[_tokenContract][_tokenId] = block.timestamp;
+        } else {
+            lastUpdate = timeOfLastUpdate[_tokenContract][_tokenId];
+        }
+        
         // Create StakedToken
-        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId, block.timestamp, block.timestamp, _tokenContract);
-
+        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId, block.timestamp, lastUpdate, _tokenContract);
+    
         // Add the token to the users stakedTokens array
         stakers[_msgSender()].stakedTokens.push(stakedToken);
 
@@ -116,6 +127,9 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
         // Set this token's .staker to be address 0 to mark it as no longer staked
         stakers[_msgSender()].stakedTokens[index].staker = address(0);
+
+        // mark the time of last update for this token
+        timeOfLastUpdate[_tokenContract][_tokenId] = block.timestamp;
 
         // Decrement the amount staked for this wallet
         stakers[_msgSender()].amountStaked--;
@@ -170,6 +184,10 @@ contract MyntfloStaking is ReentrancyGuard, ERC2771Context {
 
     function transferOwnership(address newOwner) external onlyOwner {
         owner = newOwner;
+    }
+
+    function withdrawRewardsToken() external onlyOwner {
+        rewardsToken.transfer(owner, rewardsToken.balanceOf(address(this)));
     }
 
     ////////////////////

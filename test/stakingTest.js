@@ -20,7 +20,7 @@ describe("Staking rewards", function () {
 
         // deploys token contract
         const tokenFactory = await ethers.getContractFactory("MyntfloToken");
-        const tokenContract = await tokenFactory.deploy();
+        const tokenContract = await tokenFactory.deploy(forwardingContractAddress, 20000000);
         tokenAddress = tokenContract.address;
 
         // deploys staking contract
@@ -32,7 +32,8 @@ describe("Staking rewards", function () {
 
         // mints an NFT
         await nftContract.setSaleStatus(1);
-        await nftContract.mintPublic(1, user1.address, {value: 0});
+        await nftContract.setPricePublic('1000000000000000000');
+        await nftContract.mintPublic(1, user1.address, {value: '1000000000000000000'});
         
         // test user owns an NFT
         var balance = await nftContract.balanceOf(user1.address);
@@ -42,7 +43,7 @@ describe("Staking rewards", function () {
         expect(ownerOf).to.equal(user1.address);
 
         // mint some erc20 rewards to contract
-        await tokenContract.mint(stakingContract.address, 10000000);
+        await tokenContract.transfer(stakingContract.address, 10000000);
 
         // ######## STAKING #######
 
